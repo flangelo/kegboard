@@ -162,9 +162,12 @@ class Kegboard:
 
         header = bytes[:12]
         payload = bytes[12:-4]
-        trailer = bytes[-4:]
-        crcd_bytes = bytes[:-2]
-        checked_crc = crc16.crc16_ccitt(crcd_bytes)
+        crcd_bytes = bytes[:-4]
+        computed_crc = crc16.crc16_ccitt(crcd_bytes)
+        packet_crc = struct.unpack('<H', bytes[-4:-2])[0]
+
+        if computed_crc != packet_crc:
+          continue
 
         message_id, message_len = struct.unpack('<HH', header[8:])
         try:

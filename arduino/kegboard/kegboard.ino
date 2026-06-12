@@ -320,7 +320,9 @@ void writeRelayPacket(int channel)
 void writeMeterPacket(int channel)
 {
   char name[5] = "flow";
+  noInterrupts();
   unsigned long status = gMeters[channel];
+  interrupts();
   if (status == gLastMeters[channel]) {
     return;
   } else {
@@ -848,6 +850,12 @@ void readIncomingSerialData() {
     readSerialBytes(serial_buf, KBSP_FOOTER_LEN, 0);
 
     // Check CRC
+    {
+      uint16_t received_crc = (uint8_t)serial_buf[0] | ((uint16_t)(uint8_t)serial_buf[1] << 8);
+      if (gInputPacket.GenCrc() != received_crc) {
+        goto out_reset;
+      }
+    }
 
     // Check trailer
     if (strncmp((serial_buf + 2), KBSP_TRAILER, KBSP_FOOTER_TRAILER_LEN)) {
